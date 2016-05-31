@@ -1,6 +1,5 @@
 package org.apache.spark.sql.cassandra
 
-import java.io.IOException
 import java.net.InetAddress
 import java.util.UUID
 
@@ -13,14 +12,13 @@ import org.apache.spark.sql.{DataFrame, Row, SQLContext, sources}
 import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.{Logging, SparkConf}
 
-import com.datastax.driver.core.Metadata
 import com.datastax.spark.connector.cql.{CassandraConnector, CassandraConnectorConf, Schema}
-import com.datastax.spark.connector.rdd.partitioner.CassandraPartitionGenerator._
 import com.datastax.spark.connector.rdd.partitioner.DataSizeEstimates
+import com.datastax.spark.connector.rdd.partitioner.dht.TokenFactory.forSystemLocalPartitioner
 import com.datastax.spark.connector.rdd.{CassandraRDD, ReadConf}
 import com.datastax.spark.connector.types.{InetType, UUIDType, VarIntType}
 import com.datastax.spark.connector.util.Quote._
-import com.datastax.spark.connector.util.{ConfigParameter, NameTools, ReflectionUtil}
+import com.datastax.spark.connector.util.{ConfigParameter, ReflectionUtil}
 import com.datastax.spark.connector.writer.{SqlRowWriter, WriteConf}
 import com.datastax.spark.connector.{SomeColumns, _}
 
@@ -253,7 +251,7 @@ object CassandraSourceRelation {
     val tableSizeInBytes = tableSizeInBytesString match {
       case Some(size) => Option(size.toLong)
       case None =>
-        val tokenFactory = getTokenFactory(cassandraConnector)
+        val tokenFactory = forSystemLocalPartitioner(cassandraConnector)
         val dataSizeInBytes =
           new DataSizeEstimates(
             cassandraConnector,

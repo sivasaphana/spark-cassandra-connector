@@ -4,7 +4,7 @@ import java.io.IOException
 
 import com.datastax.spark.connector._
 import com.datastax.spark.connector.cql._
-import com.datastax.spark.connector.rdd.partitioner._
+import com.datastax.spark.connector.rdd.partitioner.{CassandraPartition, CassandraPartitionGenerator, CqlTokenRange, DataSizeEstimates, NodeAddresses, _}
 import com.datastax.spark.connector.rdd.partitioner.dht.{Token => ConnectorToken}
 import com.datastax.spark.connector.rdd.reader._
 import com.datastax.spark.connector.types.ColumnType
@@ -12,7 +12,6 @@ import com.datastax.spark.connector.util.CqlWhereParser.{EqPredicate, InListPred
 import com.datastax.spark.connector.util.Quote._
 import com.datastax.spark.connector.util.{CountingIterator, CqlWhereParser}
 import com.datastax.spark.connector.writer.RowWriterFactory
-
 import com.datastax.driver.core._
 import org.apache.spark.metrics.InputMetricsUpdater
 import org.apache.spark.{Partition, Partitioner, SparkContext, TaskContext}
@@ -73,7 +72,8 @@ class CassandraTableScanRDD[R] private[connector](
     val classTag: ClassTag[R],
     @transient val rowReaderFactory: RowReaderFactory[R])
   extends CassandraRDD[R](sc, Seq.empty)
-  with CassandraTableRowReaderProvider[R] {
+  with CassandraTableRowReaderProvider[R]
+  with SplitSizeEstimator[R] {
 
   override type Self = CassandraTableScanRDD[R]
 
@@ -219,9 +219,10 @@ class CassandraTableScanRDD[R] private[connector](
 
   @transient lazy val partitionGenerator = {
     if (containsPartitionKey(where)) {
-      CassandraPartitionGenerator(connector, tableDef, Some(1), splitSize)
+      CassandraPartitionGenerator(connector, tableDef, 1)
     } else {
-      CassandraPartitionGenerator(connector, tableDef, splitCount, splitSize)
+      val reevaluatedSplitCount = splitCount.getOrElse(estimateSplitCount(splitSize))
+      CassandraPartitionGenerator(connector, tableDef, reevaluatedSplitCount)
     }
   }
 
