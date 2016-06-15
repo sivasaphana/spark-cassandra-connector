@@ -47,7 +47,7 @@ private[connector] class CassandraPartitionGenerator[V, T <: Token[V]](
       * will let us more easily deal with Partition Key equals and In clauses
       */
     if (splitCount == 1) {
-      Seq(ranges(0).copy[V, T](tokenFactory.minToken, tokenFactory.maxToken))
+      Seq(ranges.head.copy[V, T](tokenFactory.minToken, tokenFactory.minToken))
     } else {
       ranges
     }
