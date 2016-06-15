@@ -2,7 +2,6 @@ package com.datastax.spark.connector.rdd.partitioner
 
 import java.net.InetAddress
 
-import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.{FlatSpec, Matchers}
 
 import com.datastax.spark.connector.rdd.partitioner.dht.TokenFactory.Murmur3TokenFactory
@@ -12,14 +11,13 @@ import com.datastax.spark.connector.rdd.partitioner.dht.{LongToken, TokenRange}
 class Murmur3PartitionerTokenRangeSplitterSpec
   extends FlatSpec
   with SplitterBehaviors[Long, LongToken]
-  with TableDrivenPropertyChecks
   with Matchers {
 
   private val splitter = new Murmur3PartitionerTokenRangeSplitter
 
-  "Murmur3PartitionerSplitter" should behave like singleTokenSplitter(splitter)
+  "Murmur3PartitionerSplitter" should "split tokens" in testSplittingTokens(splitter)
 
-  it should behave like multipleTokenSplitter(splitter)
+  it should "split token sequences" in testSplittingTokenSequences(splitter)
 
   override def hugeTokens: Seq[TokenRange[Long, LongToken]] = {
     val hugeTokensCount = 10

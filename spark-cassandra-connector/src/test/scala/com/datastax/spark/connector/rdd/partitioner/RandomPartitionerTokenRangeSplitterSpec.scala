@@ -2,7 +2,6 @@ package com.datastax.spark.connector.rdd.partitioner
 
 import java.net.InetAddress
 
-import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.{Matchers, _}
 
 import com.datastax.spark.connector.rdd.partitioner.dht.TokenFactory.RandomPartitionerTokenFactory
@@ -11,15 +10,14 @@ import com.datastax.spark.connector.rdd.partitioner.dht.{BigIntToken, TokenRange
 
 class RandomPartitionerTokenRangeSplitterSpec
   extends FlatSpec
-  with SplitterBehaviors[BigInt, BigIntToken]
-  with TableDrivenPropertyChecks
-  with Matchers {
+    with SplitterBehaviors[BigInt, BigIntToken]
+    with Matchers {
 
   private val splitter = new RandomPartitionerTokenRangeSplitter
 
-  "RandomPartitionerSplitter" should behave like singleTokenSplitter(splitter)
+  "RandomPartitionerSplitter" should "split tokens" in testSplittingTokens(splitter)
 
-  it should behave like multipleTokenSplitter(splitter)
+  it should "split token sequences" in testSplittingTokenSequences(splitter)
 
   override def hugeTokens: Seq[TokenRange[BigInt, BigIntToken]] = {
     val hugeTokensCount = 10
