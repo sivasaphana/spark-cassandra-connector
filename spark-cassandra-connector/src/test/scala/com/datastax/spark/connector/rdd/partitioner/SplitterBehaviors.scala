@@ -33,7 +33,7 @@ private[partitioner] trait SplitterBehaviors[V, T <: Token[V]] {
 
       (range(start = 10, end = 50), splittedIn(10), outputs(splits = 10, withSize = 4)),
       (range(start = 0, end = 1000), splittedIn(3), outputs(splits = 3, withSize = 333, sizeTolerance = 1)),
-      (hugeTokens.head, splittedIn(100), outputs(splits = 100, withSize = hugeTokens.head.distance / 100, sizeTolerance = 4))
+      (hugeTokens.head, splittedIn(100), outputs(splits = 100, withSize = hugeTokens.head.rangeSize / 100, sizeTolerance = 4))
     )
 
     for ((range, splittedIn, expected) <- splitCases) {
@@ -44,8 +44,8 @@ private[partitioner] trait SplitterBehaviors[V, T <: Token[V]] {
         splits.head.start should be(range.start)
         splits.last.end should be(range.end)
         splits.foreach(_.replicas should be(range.replicas))
-        splits.foreach(s => s.distance should (be >= expected.minSize and be <= expected.maxSize))
-        splits.map(_.distance).sum should be(range.distance)
+        splits.foreach(s => s.rangeSize should (be >= expected.minSize and be <= expected.maxSize))
+        splits.map(_.rangeSize).sum should be(range.rangeSize)
         splits.map(_.ringFraction).sum should be(range.ringFraction +- .000000001)
         for (Seq(range1, range2) <- splits.sliding(2)) range1.end should be(range2.start)
       }
@@ -62,7 +62,7 @@ private[partitioner] trait SplitterBehaviors[V, T <: Token[V]] {
         splittedIn(4), outputs(splits = 4, withSize = 5)),
       (hugeTokens,
         splittedIn(1000),
-        outputs(splits = 1000, withSize = hugeTokens.map(_.distance).sum / 1000, sizeTolerance = 1000))
+        outputs(splits = 1000, withSize = hugeTokens.map(_.rangeSize).sum / 1000, sizeTolerance = 1000))
     )
 
     for ((ranges, splittedIn, expected) <- splitCases) {
@@ -71,8 +71,8 @@ private[partitioner] trait SplitterBehaviors[V, T <: Token[V]] {
         splits.size should be(expected.splitCount)
         splits.head.start should be(ranges.head.start)
         splits.last.end should be(ranges.last.end)
-        splits.foreach(s => s.distance should (be >= expected.minSize and be <= expected.maxSize))
-        splits.map(_.distance).sum should be(ranges.map(_.distance).sum)
+        splits.foreach(s => s.rangeSize should (be >= expected.minSize and be <= expected.maxSize))
+        splits.map(_.rangeSize).sum should be(ranges.map(_.rangeSize).sum)
         splits.map(_.ringFraction).sum should be(ranges.map(_.ringFraction).sum +- .000000001)
         for (Seq(range1, range2) <- splits.sliding(2)) range1.end should be(range2.start)
       }

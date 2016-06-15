@@ -80,7 +80,7 @@ private[connector] class CassandraPartitionGenerator[V, T <: Token[V]](
 
     val partitions = for (group <- tokenRangeGroups) yield {
       val replicas = group.map(_.replicas).reduce(_ intersect _)
-      val rowCount = group.map(_.distance).sum
+      val rowCount = group.map(_.rangeSize).sum
       val cqlRanges = group.flatMap(rangeToCql)
       // partition index will be set later
       CassandraPartition(0, replicas, cqlRanges, rowCount.toLong)

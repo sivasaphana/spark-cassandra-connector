@@ -13,12 +13,12 @@ private[partitioner] class RandomPartitionerTokenRangeSplitter
   }
 
   override def split(tokenRange: TokenRange, splitCount: Int): Seq[TokenRange] = {
-    val rangeTokenCount = tokenRange.distance
+    val rangeSize = tokenRange.rangeSize
     val wrap = wrapWithMax(tokenRange.tokenFactory.maxToken.value)(_)
 
-    val splitPointsCount = if (rangeTokenCount < splitCount) rangeTokenCount.toInt else splitCount
+    val splitPointsCount = if (rangeSize < splitCount) rangeSize.toInt else splitCount
     val splitPoints = (0 until splitPointsCount).map({ i =>
-      val nextToken: BigInt = tokenRange.start.value + (rangeTokenCount * i / splitPointsCount)
+      val nextToken: BigInt = tokenRange.start.value + (rangeSize * i / splitPointsCount)
       new BigIntToken(wrap(nextToken))
     }) :+ tokenRange.end
 

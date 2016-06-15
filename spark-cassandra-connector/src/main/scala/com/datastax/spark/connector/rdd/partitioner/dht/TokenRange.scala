@@ -5,7 +5,7 @@ import java.net.InetAddress
 case class TokenRange[V, T <: Token[V]] (
     start: T, end: T, replicas: Set[InetAddress], tokenFactory: TokenFactory[V, T]) {
 
-  private[partitioner] lazy val distance = tokenFactory.distance(start, end)
+  private[partitioner] lazy val rangeSize = tokenFactory.distance(start, end)
 
   private[partitioner] lazy val ringFraction = tokenFactory.ringFraction(start, end)
 

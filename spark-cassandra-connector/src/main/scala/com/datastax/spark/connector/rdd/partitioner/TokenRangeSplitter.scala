@@ -22,8 +22,8 @@ private[partitioner] trait TokenRangeSplitter[V, T <: Token[V]] {
     }).toList
   }
 
-  /** Splits the token range uniformly into sub-ranges. */
-   def split(tokenRange: TokenRange[V, T], totalSplitCount: Int): Seq[TokenRange[V, T]]
+  /** Splits the token range uniformly into splitCount sub-ranges. */
+   def split(tokenRange: TokenRange[V, T], splitCount: Int): Seq[TokenRange[V, T]]
 }
 
 object TokenRangeSplitter {
