@@ -68,11 +68,11 @@ private[partitioner] trait SplitterBehaviors[V, T <: Token[V]] {
 
       (mediumRanges, splittedIn(149), outputs(splits = 100, withSize = wholeRingSize / 100)),
 
-      (mediumRanges, splittedIn(150), outputs(splits = 100, withSize = wholeRingSize / 100)),
+      (mediumRanges, splittedIn(150), outputs(splits = 200, withSize = wholeRingSize / 200, sizeTolerance = 1)),
 
-      (mediumRanges, splittedIn(151), outputs(splits = 100, withSize = wholeRingSize / 100)),
+      (mediumRanges, splittedIn(151), outputs(splits = 200, withSize = wholeRingSize / 200, sizeTolerance = 1)),
 
-      (mediumRanges, splittedIn(199), outputs(splits = 100, withSize = wholeRingSize / 100)),
+      (mediumRanges, splittedIn(199), outputs(splits = 200, withSize = wholeRingSize / 200, sizeTolerance = 1)),
 
       (mediumRanges, splittedIn(200), outputs(splits = 200, withSize = wholeRingSize / 200, sizeTolerance = 1)),
 

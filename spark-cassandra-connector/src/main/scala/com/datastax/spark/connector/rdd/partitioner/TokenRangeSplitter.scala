@@ -18,7 +18,7 @@ private[partitioner] trait TokenRangeSplitter[V, T <: Token[V]] {
 
     parTokenRanges.tasksupport = new ForkJoinTaskSupport(TokenRangeSplitter.pool)
     parTokenRanges.flatMap(tokenRange => {
-      val splitCount = (tokenRange.ringFraction / ringFractionPerSplit).toInt
+      val splitCount = Math.rint(tokenRange.ringFraction / ringFractionPerSplit).toInt
       split(tokenRange, math.max(1, splitCount))
     }).toList
   }
