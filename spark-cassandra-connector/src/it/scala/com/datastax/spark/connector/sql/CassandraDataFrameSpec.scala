@@ -206,7 +206,8 @@ class CassandraDataFrameSpec extends SparkCassandraITFlatSpecBase {
     val zones = Seq(
       TimeZone.getTimeZone("PST"),
       TimeZone.getTimeZone("CET"),
-      TimeZone.getTimeZone("UTC")
+      TimeZone.getTimeZone("UTC"),
+      TimeZone.getTimeZone("NST")
     )
 
     val default = TimeZone.getDefault
@@ -214,6 +215,7 @@ class CassandraDataFrameSpec extends SparkCassandraITFlatSpecBase {
     for (timeZone <- zones) {
       try {
         TimeZone.setDefault(timeZone)
+        markup(s"Testing ${timeZone.getID()}")
 
         val df = sqlContext
           .read

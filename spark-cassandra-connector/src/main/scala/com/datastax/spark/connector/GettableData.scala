@@ -79,7 +79,8 @@ object GettableData {
       case map: java.util.Map[_, _] => map.view.map { case (k, v) => (convert(k), convert(v))}.toMap
       case udtValue: DriverUDTValue => UDTValue.fromJavaDriverUDTValue(udtValue)
       case tupleValue: DriverTupleValue => TupleValue.fromJavaDriverTupleValue(tupleValue)
-      case localDate: LocalDate => new org.joda.time.LocalDate(localDate.getMillisSinceEpoch, UTC)
+      case localDate: LocalDate =>
+        new org.joda.time.LocalDate(localDate.getYear, localDate.getMonth, localDate.getDay)
       case other => other.asInstanceOf[AnyRef]
 
     }
