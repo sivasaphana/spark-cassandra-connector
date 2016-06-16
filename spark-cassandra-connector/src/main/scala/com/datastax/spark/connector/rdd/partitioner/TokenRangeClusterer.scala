@@ -5,8 +5,9 @@ import java.net.InetAddress
 import Ordering.Implicits._
 
 import com.datastax.spark.connector.rdd.partitioner.dht.{Token, TokenRange}
-
 import scala.annotation.tailrec
+
+import com.datastax.spark.connector.rdd.partitioner.TokenRangeClusterer.WholeRing
 
 /** Groups a set of token ranges into `groupCount` groups containing not more than `maxGroupSize` token
   * ranges.
@@ -20,6 +21,8 @@ import scala.annotation.tailrec
   *    Those token ranges will make a group.
   * 3. Repeat the previous step until no more token ranges left.*/
 class TokenRangeClusterer[V, T <: Token[V]](groupCount: Int, maxGroupSize: Int = Int.MaxValue) {
+
+  private val ringFractionPerGroup = WholeRing / groupCount.toDouble
 
   private implicit object InetAddressOrdering extends Ordering[InetAddress] {
     override def compare(x: InetAddress, y: InetAddress) =
@@ -55,8 +58,10 @@ class TokenRangeClusterer[V, T <: Token[V]](groupCount: Int, maxGroupSize: Int =
     // sort by endpoints lexicographically
     // this way ranges on the same host are grouped together
     val sortedRanges = tokenRanges.sortBy(_.replicas.toSeq.sorted)
-    val ringFractionPerGroup = tokenRanges.map(_.ringFraction).sum / groupCount.toDouble
     group(sortedRanges.toStream, Vector.empty, ringFractionPerGroup)
   }
+}
 
+object TokenRangeClusterer {
+  private val WholeRing = 1.0
 }

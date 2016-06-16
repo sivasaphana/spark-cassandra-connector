@@ -19,10 +19,9 @@ class Murmur3PartitionerTokenRangeSplitterSpec
 
   it should "split token sequences" in testSplittingTokenSequences(splitter)
 
-  override def hugeTokens: Seq[TokenRange[Long, LongToken]] = {
-    val hugeTokensCount = 10
-    val hugeTokensIncrement = totalTokenCount / hugeTokensCount
-    (0 until hugeTokensCount).map(i =>
+  override def splitWholeRingIn(count: Int): Seq[TokenRange[Long, LongToken]] = {
+    val hugeTokensIncrement = totalTokenCount / count
+    (0 until count).map(i =>
       range(minToken.value + i * hugeTokensIncrement, minToken.value + (i + 1) * hugeTokensIncrement)
     )
   }

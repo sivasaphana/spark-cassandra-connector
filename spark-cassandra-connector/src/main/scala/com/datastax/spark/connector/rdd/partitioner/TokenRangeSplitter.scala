@@ -1,9 +1,10 @@
 package com.datastax.spark.connector.rdd.partitioner
 
-import com.datastax.spark.connector.rdd.partitioner.dht.{Token, TokenFactory, TokenRange}
-
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
+
+import com.datastax.spark.connector.rdd.partitioner.TokenRangeSplitter.WholeRing
+import com.datastax.spark.connector.rdd.partitioner.dht.{Token, TokenRange}
 
 
 /** Splits a token ranges into smaller sub-ranges,
@@ -11,14 +12,14 @@ import scala.concurrent.forkjoin.ForkJoinPool
 private[partitioner] trait TokenRangeSplitter[V, T <: Token[V]] {
 
   def split(tokenRanges: Iterable[TokenRange[V, T]], splitCount: Int): Iterable[TokenRange[V, T]] = {
-    val wholeRing = tokenRanges.map(_.ringFraction).sum
-    val ringFractionPerSplit = wholeRing / splitCount.toDouble
+
+    val ringFractionPerSplit = WholeRing / splitCount.toDouble
     val parTokenRanges = tokenRanges.par
 
     parTokenRanges.tasksupport = new ForkJoinTaskSupport(TokenRangeSplitter.pool)
     parTokenRanges.flatMap(tokenRange => {
-      val n = math.max(1, (tokenRange.ringFraction / ringFractionPerSplit).toInt)
-      split(tokenRange, n)
+      val splitCount = (tokenRange.ringFraction / ringFractionPerSplit).toInt
+      split(tokenRange, math.max(1, splitCount))
     }).toList
   }
 
@@ -28,6 +29,8 @@ private[partitioner] trait TokenRangeSplitter[V, T <: Token[V]] {
 
 object TokenRangeSplitter {
   private val MaxParallelism = 16
+
+  private val WholeRing = 1.0
 
   private val pool = new ForkJoinPool(MaxParallelism)
 }

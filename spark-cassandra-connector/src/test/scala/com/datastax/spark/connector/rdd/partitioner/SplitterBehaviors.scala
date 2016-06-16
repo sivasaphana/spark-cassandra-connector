@@ -9,11 +9,9 @@ private[partitioner] trait SplitterBehaviors[V, T <: Token[V]] {
 
   case class SplitResult(splitCount: Int, minSize: BigInt, maxSize: BigInt)
 
-  def hugeTokens: Seq[TokenRange[V, T]]
+  def splitWholeRingIn(count: Int): Seq[TokenRange[V, T]]
 
   def range(start: BigInt, end: BigInt): TokenRange[V, T]
-
-  def toString(range: TokenRange[V, T]): String = s"(${range.start}, ${range.end})"
 
   def splittedIn(splitCount: Int): Int = splitCount
 
@@ -21,6 +19,7 @@ private[partitioner] trait SplitterBehaviors[V, T <: Token[V]] {
     SplitResult(splits, withSize - sizeTolerance, withSize + sizeTolerance)
 
   def testSplittingTokens(splitter: => TokenRangeSplitter[V, T]) {
+    val hugeRanges = splitWholeRingIn(10)
 
     val splitCases = Seq[(TokenRange[V, T], Int, SplitResult)](
       (range(start = 0, end = 1), splittedIn(1), outputs(splits = 1, withSize = 1)),
@@ -33,13 +32,16 @@ private[partitioner] trait SplitterBehaviors[V, T <: Token[V]] {
 
       (range(start = 10, end = 50), splittedIn(10), outputs(splits = 10, withSize = 4)),
       (range(start = 0, end = 1000), splittedIn(3), outputs(splits = 3, withSize = 333, sizeTolerance = 1)),
-      (hugeTokens.head, splittedIn(100), outputs(splits = 100, withSize = hugeTokens.head.rangeSize / 100, sizeTolerance = 4))
+
+      (hugeRanges.head, splittedIn(100), outputs(splits = 100, withSize = hugeRanges.head.rangeSize / 100, sizeTolerance = 4)),
+      (hugeRanges.last, splittedIn(100), outputs(splits = 100, withSize = hugeRanges.last.rangeSize / 100, sizeTolerance = 4))
     )
 
     for ((range, splittedIn, expected) <- splitCases) {
+
       val splits = splitter.split(range, splittedIn)
 
-      withClue(s"Splitting range ${toString(range)} in $splittedIn splits failed.") {
+      withClue(s"Splitting range (${range.start}, ${range.end}) in $splittedIn splits failed.") {
         splits.size should be(expected.splitCount)
         splits.head.start should be(range.start)
         splits.last.end should be(range.end)
@@ -53,30 +55,43 @@ private[partitioner] trait SplitterBehaviors[V, T <: Token[V]] {
   }
 
   def testSplittingTokenSequences(splitter: TokenRangeSplitter[V, T]) {
+    val mediumRanges = splitWholeRingIn(100)
+    val wholeRingSize = mediumRanges.map(_.rangeSize).sum
 
     val splitCases = Seq[(Seq[TokenRange[V, T]], Int, SplitResult)](
-      (Seq(range(start = 0, end = 1)), splittedIn(1), outputs(splits = 1, withSize = 1)),
-      (Seq(range(start = 0, end = 1), range(start = 1, end = 2)),
-        splittedIn(1), outputs(splits = 2, withSize = 1)),
-      (Seq(range(start = 0, end = 10), range(start = 10, end = 20)),
-        splittedIn(4), outputs(splits = 4, withSize = 5)),
-      (hugeTokens,
-        splittedIn(1000),
-        outputs(splits = 1000, withSize = hugeTokens.map(_.rangeSize).sum / 1000, sizeTolerance = 1000))
+      // we have 100 ranges, so 100 splits is minimum
+      (mediumRanges, splittedIn(3), outputs(splits = 100, withSize = wholeRingSize / 100)),
+
+      (mediumRanges, splittedIn(100), outputs(splits = 100, withSize = wholeRingSize / 100)),
+
+      (mediumRanges, splittedIn(101), outputs(splits = 100, withSize = wholeRingSize / 100)),
+
+      (mediumRanges, splittedIn(149), outputs(splits = 100, withSize = wholeRingSize / 100)),
+
+      (mediumRanges, splittedIn(150), outputs(splits = 100, withSize = wholeRingSize / 100)),
+
+      (mediumRanges, splittedIn(151), outputs(splits = 100, withSize = wholeRingSize / 100)),
+
+      (mediumRanges, splittedIn(199), outputs(splits = 100, withSize = wholeRingSize / 100)),
+
+      (mediumRanges, splittedIn(200), outputs(splits = 200, withSize = wholeRingSize / 200, sizeTolerance = 1)),
+
+      (mediumRanges, splittedIn(201), outputs(splits = 200, withSize = wholeRingSize / 200, sizeTolerance = 1))
     )
 
     for ((ranges, splittedIn, expected) <- splitCases) {
+
       val splits = splitter.split(ranges, splittedIn)
-      withClue(s"Splitting ranges ${ranges.map(toString).mkString(",")} in $splittedIn splits failed.") {
+
+      withClue(s"Splitting ${ranges.size} ranges in $splittedIn splits failed.") {
         splits.size should be(expected.splitCount)
         splits.head.start should be(ranges.head.start)
         splits.last.end should be(ranges.last.end)
         splits.foreach(s => s.rangeSize should (be >= expected.minSize and be <= expected.maxSize))
         splits.map(_.rangeSize).sum should be(ranges.map(_.rangeSize).sum)
-        splits.map(_.ringFraction).sum should be(ranges.map(_.ringFraction).sum +- .000000001)
+        splits.map(_.ringFraction).sum should be(1.0 +- .000000001)
         for (Seq(range1, range2) <- splits.sliding(2)) range1.end should be(range2.start)
       }
     }
-
   }
 }
