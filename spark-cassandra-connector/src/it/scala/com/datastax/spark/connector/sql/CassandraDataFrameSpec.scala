@@ -1,15 +1,15 @@
 package com.datastax.spark.connector.sql
 
 import java.io.IOException
+import java.util.TimeZone
 
 import scala.collection.JavaConversions._
 import scala.concurrent.Future
-
 import com.datastax.spark.connector._
 import com.datastax.spark.connector.SparkCassandraITFlatSpecBase
 import com.datastax.spark.connector.cql.CassandraConnector
-import org.apache.spark.sql.SQLContext
-import org.joda.time.LocalDate
+import org.apache.spark.sql.{SQLContext, SaveMode}
+import org.joda.time.{DateTimeZone, LocalDate}
 
 class CassandraDataFrameSpec extends SparkCassandraITFlatSpecBase {
   useCassandraConfig(Seq("cassandra-default.yaml.template"))
@@ -202,22 +202,55 @@ class CassandraDataFrameSpec extends SparkCassandraITFlatSpecBase {
   }
 
   it should "read and write C* LocalDate columns" in {
-    val df = sqlContext
-      .read
-      .format("org.apache.spark.sql.cassandra")
-      .options(Map("table" -> "date_test", "keyspace" -> ks, "cluster" -> "ClusterOne"))
-      .load
 
-    df.count should be (1)
-    df.first.getDate(1) should be (new LocalDate(1930, 5, 31).toDate)
+    val zones = Seq(
+      TimeZone.getTimeZone("PST"),
+      TimeZone.getTimeZone("CET"),
+      TimeZone.getTimeZone("UTC")
+    )
 
-    df.write
-      .format("org.apache.spark.sql.cassandra")
-      .options(Map("table" -> "date_test2", "keyspace" -> ks, "cluster" -> "ClusterOne"))
-      .save
+    val default = TimeZone.getDefault
 
-    conn.withSessionDo { session =>
-      session.execute(s"select count(1) from $ks.date_test2").one().getLong(0) should be (1)
+    for (timeZone <- zones) {
+      try {
+        TimeZone.setDefault(timeZone)
+
+        val df = sqlContext
+          .read
+          .format("org.apache.spark.sql.cassandra")
+          .options(Map("table" -> "date_test", "keyspace" -> ks, "cluster" -> "ClusterOne"))
+          .load
+
+        df.count should be(1)
+
+
+        val foundDate = df.first.getDate(1)
+        val foundLocalDate = foundDate.toLocalDate
+
+        val foundTuple = (foundLocalDate.getYear, foundLocalDate.getMonthValue, foundLocalDate.getDayOfMonth)
+
+        val expectedDate = new LocalDate(1930, 5, 31)
+        val expectedTuple = (
+          expectedDate.getYear,
+          expectedDate.getMonthOfYear,
+          expectedDate.getDayOfMonth)
+
+        withClue(s"Using timezone ${timeZone.getID}") {
+           foundTuple should be(expectedTuple)
+        }
+
+        df.write
+          .format("org.apache.spark.sql.cassandra")
+          .options(Map("table" -> "date_test2", "keyspace" -> ks, "cluster" -> "ClusterOne"))
+          .mode(SaveMode.Overwrite)
+          .save
+
+        conn.withSessionDo { session =>
+          session.execute(s"select count(1) from $ks.date_test2").one().getLong(0) should be(1)
+        }
+      } finally {
+        TimeZone.setDefault(default)
+      }
     }
   }
 
