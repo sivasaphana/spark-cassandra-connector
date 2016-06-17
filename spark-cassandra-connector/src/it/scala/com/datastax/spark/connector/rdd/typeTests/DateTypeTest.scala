@@ -1,11 +1,15 @@
 package com.datastax.spark.connector.rdd.typeTests
 
 import java.sql.Date
+import java.util.TimeZone
 
 import com.datastax.driver.core.Row
 import com.datastax.driver.core.LocalDate
 
-class DateTypeTest extends AbstractTypeTest[Date, LocalDate]{
+abstract class DateTypeTest extends AbstractTypeTest[Date, LocalDate]{
+
+  val defaultTimeZone = java.util.TimeZone.getDefault
+
   override protected val typeName: String = "date"
 
   override protected val typeData: Seq[Date] = Seq("2015-05-01", "2015-05-10", "2015-05-20","1950-03-05")
@@ -25,6 +29,28 @@ class DateTypeTest extends AbstractTypeTest[Date, LocalDate]{
         LocalDate.fromYearMonthDay(year.toInt, month.toInt, day.toInt)
     }
   }
+}
 
+class PSTDateTypeTest extends DateTypeTest {
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    TimeZone.setDefault(TimeZone.getTimeZone("PST"))
+  }
 
+  override def afterAll(): Unit = {
+    super.afterAll()
+    TimeZone.setDefault(defaultTimeZone)
+  }
+}
+
+class CETDateTypeTest extends DateTypeTest {
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    TimeZone.setDefault(TimeZone.getTimeZone("CET"))
+  }
+
+  override def afterAll(): Unit = {
+    super.afterAll()
+    TimeZone.setDefault(defaultTimeZone)
+  }
 }
