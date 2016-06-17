@@ -11,7 +11,7 @@ import scala.reflect.runtime.universe._
 
 import org.apache.commons.lang3.tuple
 import org.apache.spark.sql.catalyst.ReflectionLock.SparkReflectionLock
-import org.joda.time.{DateTime, DateTimeZone, LocalDate => JodaLocalDate}
+import org.joda.time.{DateTime, LocalDate => JodaLocalDate}
 
 import com.datastax.driver.core.LocalDate
 import com.datastax.spark.connector.TupleValue
@@ -319,9 +319,9 @@ object TypeConverter {
       case x: Calendar => x.getTime
       case x: Long => new Date(x)
       case x: UUID if x.version() == 1 => new Date(x.timestamp())
-      case x: LocalDate => new Date(x.getMillisSinceEpoch)
+      case x: LocalDate => DateConverter.convert(JodaLocalDateConverter.convert(x))
       case x: String => TimestampParser.parse(x)
-      case x: JodaLocalDate => x.toDateTimeAtStartOfDay(DateTimeZone.UTC).toDate
+      case x: JodaLocalDate => x.toDateTimeAtStartOfDay.toDate
     }
   }
 
@@ -335,7 +335,7 @@ object TypeConverter {
     def convertPF = {
       case x: Date => new java.sql.Date(x.getTime)
       case x: LocalDate => SqlDateConverter.convert(JodaLocalDateConverter.convert(x))
-      case x: JodaLocalDate => new java.sql.Date(x.toDateTimeAtStartOfDay().getMillis)
+      case x: JodaLocalDate => new java.sql.Date(x.toDateTimeAtStartOfDay.getMillis)
     }
   }
 

@@ -1059,7 +1059,7 @@ class CassandraRDDSpec extends SparkCassandraITFlatSpecBase {
     val row = sc.cassandraTable(ks, "date_test").where("key = 1").first
 
     row.getInt("key") should be(1)
-    row.getDate("dd") should be(expected.toDateTimeAtStartOfDay(DateTimeZone.UTC).toDate)
+    row.getDate("dd") should be(expected.toDateTimeAtStartOfDay.toDate)
     row.get[LocalDate]("dd") should be(expected)
   }
 
@@ -1068,7 +1068,7 @@ class CassandraRDDSpec extends SparkCassandraITFlatSpecBase {
     val date = sc.cassandraTable[(Int, Date)](ks, "date_test").where("key = 1").first._2
     val localDate = sc.cassandraTable[(Int, LocalDate)](ks, "date_test").where("key = 1").first._2
 
-    date should be(expected.toDateTimeAtStartOfDay(DateTimeZone.UTC).toDate)
+    date should be(expected.toDateTimeAtStartOfDay.toDate)
     localDate should be(expected)
   }
 }
