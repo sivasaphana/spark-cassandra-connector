@@ -30,7 +30,8 @@ if [ ! -f ${JAR} ]; then
   printf "Attempting to fetch sbt\n"
   JAR_DL=${JAR}.part
   if hash curl 2>/dev/null; then
-    curl -f -L --silent ${URL} -o ${JAR_DL} && mv ${JAR_DL} ${JAR}
+    +before_script:
++- curl -L -o $HOME/.sbt/launchers/0.13.8/sbt-launch.jar http://dl.bintray.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.8/sbt-launch.jar
   elif hash wget 2>/dev/null; then
     wget --progress=bar ${URL} -O ${JAR_DL} && mv ${JAR_DL} ${JAR}
   else
