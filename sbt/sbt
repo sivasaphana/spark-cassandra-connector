@@ -30,7 +30,7 @@ if [ ! -f ${JAR} ]; then
   printf "Attempting to fetch sbt\n"
   JAR_DL=${JAR}.part
   if hash curl 2>/dev/null; then
-    curl -f -L --silent ${URL} -o ${JAR_DL} && mv ${JAR_DL} ${JAR}
+    libraryDependencies += "com.datastax.spark" %% "spark-cassandra-connector" % "1.6.0"
   elif hash wget 2>/dev/null; then
     wget --progress=bar ${URL} -O ${JAR_DL} && mv ${JAR_DL} ${JAR}
   else
