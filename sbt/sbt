@@ -23,6 +23,9 @@
 SBT_VERSION=0.13.8
 URL=https://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/${SBT_VERSION}/sbt-launch.jar
 JAR=sbt/sbt-launch-${SBT_VERSION}.jar
+libraryDependencies += "com.datastax.spark" %% "spark-cassandra-connector" % "1.6.0"
+libraryDependencies += "com.datastax.spark" %% "spark-cassandra-connector-java" % "1.6.0"
+
 
 # Download sbt launch jar if it hasn't been downloaded yet
 if [ ! -f ${JAR} ]; then
@@ -30,7 +33,7 @@ if [ ! -f ${JAR} ]; then
   printf "Attempting to fetch sbt\n"
   JAR_DL=${JAR}.part
   if hash curl 2>/dev/null; then
-    libraryDependencies += "com.datastax.spark" %% "spark-cassandra-connector" % "1.6.0"
+    curl -f -L --silent ${URL} -o ${JAR_DL} && mv ${JAR_DL} ${JAR}
   elif hash wget 2>/dev/null; then
     wget --progress=bar ${URL} -O ${JAR_DL} && mv ${JAR_DL} ${JAR}
   else
